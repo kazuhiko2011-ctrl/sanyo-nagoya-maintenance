@@ -185,7 +185,7 @@
             inputs += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
             for (var i = 0; i < options.length; i++) {
                 var isActive = savedValue === options[i];
-                inputs += '<label class="btn btn-' + colors[i] + (isActive ? ' active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
+                inputs += '<label class="btn btn-outline-' + colors[i] + (isActive ? ' active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
             }
             inputs += '</div>';
         }

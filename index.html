@@ -1,59 +1,45 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-
-<!-- アクセス制限＆リンク修正用スクリプト -->
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    try {
-      const SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
-      const params = new URLSearchParams(window.location.search);
-      const currentKey = params.get('key');
-
-      if (currentKey === SECRET_KEY) {
-        // --- アクセス許可 ---
-        // ページ内の全リンクを調べて、キーを付与する
-        const links = document.querySelectorAll('a');
-        links.forEach(link => {
-          const href = link.getAttribute('href');
-          // ローカルのHTMLファイルへのリンクかチェック (相対パスを想定)
-          if (href && href.endsWith('.html') && !href.startsWith('http')) {
-            link.href = href + '?key=' + currentKey;
-          }
-        });
-      } else {
-        // --- アクセス拒否 ---
-        document.body.style.visibility = 'hidden';
-        document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
-        document.body.style.visibility = 'visible';
-        throw new Error("Invalid or missing access key.");
-      }
-    } catch (e) {
-      // エラー発生時も念のため拒否
-      document.body.style.visibility = 'hidden';
-      document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
-      document.body.style.visibility = 'visible';
-      throw new Error("Access denied due to an error during key check.");
-    }
-  });
-</script>
-
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>チェックリストメニュー</title>
+    <title>チェックリスト選択メニュー</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container mt-5 menu-container">
-        <h1 class="text-center mb-4">チェックリストメニュー</h1>
+        <h1 class="text-center mb-4">チェックリスト選択</h1>
         <div class="list-group">
-            <a href="Hugle_Pump_Checklist.html" class="list-group-item list-group-item-action">ヒューガルポンプ異常対応チェックリスト</a>
-            <a href="Gear_Pump_Checklist.html" class="list-group-item list-group-item-action">ギヤポンプ異常対応チェックリスト</a>
-            <a href="Canned_Pump_Checklist.html" class="list-group-item list-group-item-action">Canned Pump Checklist</a>
-            <a href="DCS_Checklist.html" class="list-group-item list-group-item-action">DCS Checklist</a>
-            <a href="Paper_Bag_Filling_Machine_Checklist.html" class="list-group-item list-group-item-action">Paper Bag Filling Machine Checklist</a>
+            <a href="Magnet_Pump_Checklist.html?key=93SYa4oyAeTbhKaC1Cj3hA" class="list-group-item list-group-item-action">「マグネットポンプ」異常対応チェックリスト</a>
+            <a href="Paper_Bag_Filling_Machine_Checklist.html?key=93SYa4oyAeTbhKaC1Cj3hA" class="list-group-item list-group-item-action">紙袋充填機チェックリスト</a>
+            <a href="DCS_Checklist.html?key=93SYa4oyAeTbhKaC1Cj3hA" class="list-group-item list-group-item-action">DCS異常対応チェックリスト</a>
+            <a href="Gear_Pump_Checklist.html?key=93SYa4oyAeTbhKaC1Cj3hA" class="list-group-item list-group-item-action">ギヤポンプ異常対応チェックリスト</a>
+            <a href="Canned_Pump_Checklist.html?key=93SYa4oyAeTbhKaC1Cj3hA" class="list-group-item list-group-item-action">「キャンドポンプ（業務用）」異常対応チェックリスト</a>
+            <a href="Hugle_Pump_Checklist.html?key=93SYa4oyAeTbhKaC1Cj3hA" class="list-group-item list-group-item-action">ヒューガルポンプ異常対応チェックリスト</a>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script>
+        // --- アクセス制御＆キー引き継ぎロジック ---
+        (function() {
+            function getQueryParam(param) {
+                var href = window.location.href;
+                var name = param.replace(/[\\\[\]]/g, '\\$&');
+                var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+                var results = regex.exec(href);
+                if (!results) return null;
+                if (!results[2]) return '';
+                return decodeURIComponent(results[2].replace(/\+/g, ' '));
+            }
+
+            var SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
+            var currentKey = getQueryParam('key');
+
+            if (currentKey !== SECRET_KEY) {
+                document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
+                return;
+            }
+        })();
+    </script>
 </body>
 </html>

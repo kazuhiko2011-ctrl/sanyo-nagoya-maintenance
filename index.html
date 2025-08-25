@@ -65,12 +65,12 @@
 
     function initMenu() {
         var checklistFiles = [
-            { file: 'DCS_Checklist.csv', title: 'DCS異常対応チェックリスト' },
-            { file: 'Canned_Pump_Checklist.csv', title: '「キャンドポンプ（業務用）」異常対応チェックリスト' },
-            { file: 'Gear_Pump_Checklist.csv', title: 'ギヤポンプ異常対応チェックリスト' },
-            { file: 'Hugle_Pump_Checklist.csv', title: 'ヒューガルポンプ異常対応チェックリスト' },
-            { file: 'Paper_Bag_Filling_Machine_Checklist.csv', title: '紙袋充填機チェックリスト' },
-            { file: 'Magnet_Pump_Checklist.csv', title: '「マグネットポンプ」異常対応チェックリスト' }
+            { file: '/sanyo-nagoya-maintenance/DCS_Checklist.csv', title: 'DCS異常対応チェックリスト' },
+            { file: '/sanyo-nagoya-maintenance/Canned_Pump_Checklist.csv', title: '「キャンドポンプ（業務用）」異常対応チェックリスト' },
+            { file: '/sanyo-nagoya-maintenance/Gear_Pump_Checklist.csv', title: 'ギヤポンプ異常対応チェックリスト' },
+            { file: '/sanyo-nagoya-maintenance/Hugle_Pump_Checklist.csv', title: 'ヒューガルポンプ異常対応チェックリスト' },
+            { file: '/sanyo-nagoya-maintenance/Paper_Bag_Filling_Machine_Checklist.csv', title: '紙袋充填機チェックリスト' },
+            { file: '/sanyo-nagoya-maintenance/Magnet_Pump_Checklist.csv', title: '「マグネットポンプ」異常対応チェックリスト' }
         ];
         var menuList = $('#menu-list');
         menuList.empty();
@@ -92,7 +92,10 @@
         phaseKey = 'currentPhase_' + currentChecklistFile;
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
         fetch(fileName)
-            .then(function(response) { return response.text(); })
+            .then(function(response) { 
+                if (!response.ok) { throw new Error('Network response was not ok'); }
+                return response.text(); 
+            })
             .then(function(csvText) {
                 Papa.parse(csvText, {
                     header: true,
@@ -105,6 +108,10 @@
                         initializeChecklist();
                     }
                 });
+            })
+            .catch(function(error) {
+                console.error('Fetch Error:', error);
+                alert('チェックリストのデータ読み込みに失敗しました。ファイルパスを確認してください。\n' + fileName);
             });
     }
 
@@ -218,7 +225,7 @@
             $('#print-btn').prop('disabled', false);
         } else {
             if (currentPhase === 3) {
-                var phase3ItemsToCheck = itemsToCheck; // In phase 3, itemsToCheck is already filtered.
+                var phase3ItemsToCheck = itemsToCheck;
                 var allPhase3Answered = phase3ItemsToCheck.length > 0 ? phase3ItemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
                 if (allPhase3Answered) {
                     $('#print-btn').prop('disabled', false);

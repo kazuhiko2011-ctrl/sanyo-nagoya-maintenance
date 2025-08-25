@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -24,16 +23,177 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
 (function() {
-    var checklistData = [{"phase":1,"phase_title":"Phase 1: 異常検知・緊急停止","type":"checklist","category":"異常検知","item":"オペレーターステーション（OPS）の画面全体または一部がフリーズ、表示が欠ける","item_id":"1_0"}, /* ... more data ... */];
+    var checklistData = [{"phase":1,"phase_title":"Phase 1: 異常検知・緊急停止","type":"checklist","category":"異常検知","item":"オペレーターステーション（OPS）の画面全体または一部がフリーズ、表示が欠ける","item_id":"1_0"}, /* ... DCS Data ... */];
     var SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
 
-    // --- Universal Logic Block (Same as Magnet Pump) ---
-    function getQueryParam(param) { /* ... */ }
+    // --- Universal Logic Block ---
+    function getQueryParam(param) {
+        var href = window.location.href;
+        var name = param.replace(/[\\\[\\\\]]/g, '\\$&');
+        var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
+        var results = regex.exec(href);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, ' '));
+    }
+
     var currentKey = getQueryParam('key');
-    if (currentKey !== SECRET_KEY) { /* ... access denied ... */ return; }
-    document.addEventListener('DOMContentLoaded', function() { /* ... link rewriting ... */ });
+    if (currentKey !== SECRET_KEY) {
+        document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
+        return;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var links = document.getElementsByTagName('a');
+        for (var i = 0; i < links.length; i++) {
+            var link = links[i];
+            var href = link.getAttribute('href');
+            if (href && href.indexOf('.html') !== -1 && href.indexOf('http') !== 0) {
+                link.href = href + '?key=' + currentKey;
+            }
+        }
+    });
+
     $(document).ready(function() {
-        // ... full, corrected checklist logic ...
+        var currentPhase = 1;
+        var userSelections = {};
+        var fileName = window.location.pathname.split("/").pop();
+        var selectionKey = 'userSelections_' + fileName;
+        var phaseKey = 'currentPhase_' + fileName;
+        var printEnabledKey = 'printEnabled_' + fileName;
+
+        function initialize() {
+            var storedSelections = sessionStorage.getItem(selectionKey);
+            if (storedSelections) userSelections = JSON.parse(storedSelections);
+            var storedPhase = sessionStorage.getItem(phaseKey);
+            if (storedPhase) currentPhase = parseInt(storedPhase, 10);
+            renderPhase(currentPhase);
+        }
+
+        function renderPhase(phase) {
+            var container = $('#checklist-container');
+            container.empty();
+            var phaseData = checklistData.filter(function(item) { return parseInt(item.phase) === phase; });
+            if (phaseData.length === 0) {
+                container.append('<p>このフェーズの項目はありません。</p>');
+                updateNavigation();
+                return;
+            }
+            var phaseTitle = phaseData[0].phase_title;
+            container.append('<h2 class="phase-title">' + phaseTitle + '</h2>');
+
+            var itemsToShow = phaseData;
+            if (phase === 3 || phase === 5) {
+                var linkedPhase = phase === 3 ? 2 : 4;
+                var problemItemIds = [];
+                for (var key in userSelections) {
+                    if (userSelections.hasOwnProperty(key)) {
+                        var selection = userSelections[key];
+                        if (parseInt(key.split('_')[0]) === linkedPhase && selection.value === '問題あり') {
+                            problemItemIds.push(key);
+                        }
+                    }
+                }
+                itemsToShow = phaseData.filter(function(item) { return problemItemIds.indexOf(item.linked_item_id) !== -1; });
+            }
+
+            if (itemsToShow.length === 0 && (phase === 3 || phase === 5)) {
+                container.append('<p>前のフェーズで「問題あり」とされた項目はありません。次へ進んでください。</p>');
+            } else {
+                var groupedByCategory = itemsToShow.reduce(function(acc, item) { (acc[item.category] = acc[item.category] || []).push(item); return acc; }, {});
+                for (var category in groupedByCategory) {
+                    container.append('<h4 class="category-title">' + category + '</h4>');
+                    groupedByCategory[category].forEach(function(item) { container.append(createItemHtml(item, phase)); });
+                }
+            }
+            updateNavigation();
+        }
+
+        function createItemHtml(item, phase) {
+            var itemKey = item.item_id;
+            var savedSelection = userSelections[itemKey];
+            var savedValue = savedSelection ? savedSelection.value : undefined;
+            var inputs = '';
+            if (item.type === 'checklist') {
+                var isChecked = savedValue === 'checked';
+                inputs = '<div class="form-check"><input type="checkbox" class="form-check-input" data-item-key="' + itemKey + '" ' + (isChecked ? 'checked' : '') + '></div>';
+            } else {
+                var options = (phase === 2 || phase === 4) ? ['問題なし', '問題あり'] : ['実施済み', '非該当'];
+                var colors = (phase === 2 || phase === 4) ? ['success', 'danger'] : ['primary', 'secondary'];
+                inputs += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
+                for (var i = 0; i < options.length; i++) {
+                    var isActive = savedValue === options[i];
+                    inputs += '<label class="btn btn-outline-' + colors[i] + ' ' + (isActive ? 'active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
+                }
+                inputs += '</div>';
+            }
+            return '<div class="checklist-item-row"><label class="item-label">' + item.item + '</label><div>' + inputs + '</div></div>';
+        }
+
+        function updateNavigation() {
+            var totalPhases = Math.max.apply(Math, checklistData.map(function(item) { return parseInt(item.phase); }));
+            $('#prev-btn').toggle(currentPhase > 1);
+            $('#next-btn').toggle(currentPhase < totalPhases);
+
+            var phaseItems = checklistData.filter(function(item) { return parseInt(item.phase) === currentPhase; });
+            var isNextEnabled = false;
+            if (currentPhase === 1) {
+                var detectionItems = phaseItems.filter(function(item) { return item.category === '異常検知'; });
+                var stopItems = phaseItems.filter(function(item) { return item.category === '緊急停止措置'; });
+                var oneDetectionChecked = detectionItems.some(function(item) { return userSelections[item.item_id]; });
+                var allStopsChecked = stopItems.every(function(item) { return userSelections[item.item_id]; });
+                isNextEnabled = oneDetectionChecked && allStopsChecked;
+            } else {
+                var itemsToCheck = phaseItems;
+                if (currentPhase === 3 || currentPhase === 5) {
+                    var linkedPhase = currentPhase === 3 ? 2 : 4;
+                    var problemItemIds = [];
+                    for (var key in userSelections) {
+                        if (userSelections.hasOwnProperty(key)) {
+                            var selection = userSelections[key];
+                            if (parseInt(key.split('_')[0]) === linkedPhase && selection.value === '問題あり') {
+                                problemItemIds.push(key);
+                            }
+                        }
+                    }
+                    itemsToCheck = phaseData.filter(function(item) { return problemItemIds.indexOf(item.linked_item_id) !== -1; });
+                }
+                isNextEnabled = itemsToCheck.length > 0 ? itemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
+            }
+            $('#next-btn').prop('disabled', !isNextEnabled);
+
+            var printAlreadyEnabled = sessionStorage.getItem(printEnabledKey) === 'true';
+            if (printAlreadyEnabled) {
+                $('#print-btn').prop('disabled', false);
+            } else {
+                var phase3Items = checklistData.filter(function(item) { return parseInt(item.phase) === 3; });
+                var allPhase3Answered = phase3Items.every(function(item) { return userSelections[item.item_id]; });
+                if (allPhase3Answered) {
+                    $('#print-btn').prop('disabled', false);
+                    sessionStorage.setItem(printEnabledKey, 'true');
+                } else {
+                    $('#print-btn').prop('disabled', true);
+                }
+            }
+        }
+
+        $('#checklist-container').on('change', 'input', function() {
+            var key = this.name || $(this).data('item-key');
+            var value = $(this).is(':checkbox') ? (this.checked ? 'checked' : 'unchecked') : this.value;
+            userSelections[key] = { value: value, id: key, phase: currentPhase };
+            sessionStorage.setItem(selectionKey, JSON.stringify(userSelections));
+            updateNavigation();
+        });
+
+        $('#exit-btn').click(function() {
+            if (confirm('メインメニューに戻りますか？\n(入力内容は保存されます)')) {
+                window.location.href = 'index.html?key=' + currentKey;
+            }
+        });
+        
+        // ... other button handlers ...
+
+        initialize();
     });
 })();
     </script>

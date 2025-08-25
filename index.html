@@ -10,12 +10,12 @@
     <div class="container mt-5 menu-container">
         <h1 class="text-center mb-4">チェックリスト選択</h1>
         <div class="list-group">
-            <a href="Magnet_Pump_Checklist.html" class="list-group-item list-group-item-action">「マグネットポンプ」異常対応チェックリスト</a>
-            <a href="Paper_Bag_Filling_Machine_Checklist.html" class="list-group-item list-group-item-action">紙袋充填機チェックリスト</a>
             <a href="DCS_Checklist.html" class="list-group-item list-group-item-action">DCS異常対応チェックリスト</a>
-            <a href="Gear_Pump_Checklist.html" class="list-group-item list-group-item-action">ギヤポンプ異常対応チェックリスト</a>
             <a href="Canned_Pump_Checklist.html" class="list-group-item list-group-item-action">「キャンドポンプ（業務用）」異常対応チェックリスト</a>
+            <a href="Gear_Pump_Checklist.html" class="list-group-item list-group-item-action">ギヤポンプ異常対応チェックリスト</a>
             <a href="Hugle_Pump_Checklist.html" class="list-group-item list-group-item-action">ヒューガルポンプ異常対応チェックリスト</a>
+            <a href="Paper_Bag_Filling_Machine_Checklist.html" class="list-group-item list-group-item-action">紙袋充填機チェックリスト</a>
+            <a href="Magnet_Pump_Checklist.html" class="list-group-item list-group-item-action">「マグネットポンプ」異常対応チェックリスト</a>
         </div>
     </div>
     <script>
@@ -23,7 +23,7 @@
     var SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
     function getQueryParam(param) {
         var href = window.location.href;
-        var name = param.replace(/[\\\[\]]/g, '\\$&');
+        var name = param.replace(/[\\[\\]]/g, '\\$&');
         var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
         var results = regex.exec(href);
         if (!results) return null;

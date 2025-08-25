@@ -2,18 +2,27 @@
 <html lang="ja">
 <head>
 
-<!-- アクセス制限用スクリプト -->
+<!-- アクセス制限＆リンク修正用スクリプト -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     try {
-      // このキーとURLのキーが一致する場合のみ表示を許可
       const SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
       const params = new URLSearchParams(window.location.search);
+      const currentKey = params.get('key');
 
-      if (params.get('key') === SECRET_KEY) {
-        // キーが一致したので、アクセスを許可
+      if (currentKey === SECRET_KEY) {
+        // --- アクセス許可 ---
+        // ページ内の全リンクを調べて、キーを付与する
+        const links = document.querySelectorAll('a');
+        links.forEach(link => {
+          const href = link.getAttribute('href');
+          // ローカルのHTMLファイルへのリンクかチェック (相対パスを想定)
+          if (href && href.endsWith('.html') && !href.startsWith('http')) {
+            link.href = href + '?key=' + currentKey;
+          }
+        });
       } else {
-        // キーが不一致、または存在しないのでアクセスを拒否
+        // --- アクセス拒否 ---
         document.body.style.visibility = 'hidden';
         document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
         document.body.style.visibility = 'visible';
@@ -28,7 +37,6 @@
     }
   });
 </script>
-<!-- /アクセス制限用スクリプト -->
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

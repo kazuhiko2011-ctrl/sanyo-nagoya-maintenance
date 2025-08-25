@@ -32,10 +32,8 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
     <script>
 (function() {
-    // --- 1. 固定設定 ---
     var SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
 
-    // --- 2. 汎用関数 ---
     function getQueryParam(param) {
         var href = window.location.href;
         var name = param.replace(/[\\[\\]]/g, '\\$&');
@@ -46,14 +44,12 @@
         return decodeURIComponent(results[2].replace(/\+/g, ' '));
     }
 
-    // --- 3. アクセス制御 ---
     var currentKey = getQueryParam('key');
     if (currentKey !== SECRET_KEY) {
         document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
         return;
     }
 
-    // --- 4. アプリケーションのグローバル変数 ---
     var checklistData = [];
     var currentPhase = 1;
     var userSelections = {};
@@ -62,13 +58,11 @@
     var phaseKey = '';
     var printEnabledKey = '';
 
-    // --- 5. メインの初期化処理 ---
     $(document).ready(function() {
         initMenu();
         attachGlobalEventListeners();
     });
 
-    // --- 6. メニュー機能 ---
     function initMenu() {
         var checklistFiles = [
             { file: 'DCS_Checklist.csv', title: 'DCS異常対応チェックリスト' },
@@ -78,7 +72,6 @@
             { file: 'Paper_Bag_Filling_Machine_Checklist.csv', title: '紙袋充填機チェックリスト' },
             { file: 'Magnet_Pump_Checklist.csv', title: '「マグネットポンプ」異常対応チェックリスト' }
         ];
-
         var menuList = $('#menu-list');
         menuList.empty();
         checklistFiles.forEach(function(item) {
@@ -93,13 +86,11 @@
         });
     }
 
-    // --- 7. チェックリストの読み込みと表示 ---
     function loadChecklist(fileName, title) {
         currentChecklistFile = fileName;
         selectionKey = 'userSelections_' + currentChecklistFile;
         phaseKey = 'currentPhase_' + currentChecklistFile;
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
-
         fetch(fileName)
             .then(function(response) { return response.text(); })
             .then(function(csvText) {
@@ -117,7 +108,6 @@
             });
     }
 
-    // --- 8. チェックリストの内部ロジック ---
     function initializeChecklist() {
         currentPhase = 1;
         userSelections = {};
@@ -140,7 +130,6 @@
         }
         var phaseTitle = phaseData[0].phase_title;
         container.append('<h2 class="phase-title">' + phaseTitle + '</h2>');
-
         var itemsToShow = phaseData;
         if (phase === 3 || phase === 5) {
             var linkedPhase = phase === 3 ? 2 : 4;
@@ -155,7 +144,6 @@
             }
             itemsToShow = phaseData.filter(function(item) { return problemItemIds.indexOf(item.linked_item_id) !== -1; });
         }
-
         if (itemsToShow.length === 0 && (phase === 3 || phase === 5)) {
             container.append('<p>前のフェーズで「問題あり」とされた項目はありません。次へ進んでください。</p>');
         } else {
@@ -198,28 +186,29 @@
         $('#next-btn').toggle(currentPhase < totalPhases);
 
         var phaseItems = checklistData.filter(function(item) { return parseInt(item.phase) === currentPhase; });
+        var itemsToCheck = phaseItems;
+        if (currentPhase === 3 || currentPhase === 5) {
+            var linkedPhase = currentPhase === 3 ? 2 : 4;
+            var problemItemIds = [];
+            for (var key in userSelections) {
+                if (userSelections.hasOwnProperty(key)) {
+                    var selection = userSelections[key];
+                    if (parseInt(key.split('_')[0]) === linkedPhase && selection.value === '問題あり') {
+                        problemItemIds.push(key);
+                    }
+                }
+            }
+            itemsToCheck = phaseItems.filter(function(item) { return problemItemIds.indexOf(item.linked_item_id) !== -1; });
+        }
+
         var isNextEnabled = false;
         if (currentPhase === 1) {
-            var detectionItems = phaseItems.filter(function(item) { return item.category === '異常検知'; });
-            var stopItems = phaseItems.filter(function(item) { return item.category === '緊急停止措置'; });
+            var detectionItems = itemsToCheck.filter(function(item) { return item.category === '異常検知'; });
+            var stopItems = itemsToCheck.filter(function(item) { return item.category === '緊急停止措置'; });
             var oneDetectionChecked = detectionItems.some(function(item) { return userSelections[item.item_id]; });
             var allStopsChecked = stopItems.every(function(item) { return userSelections[item.item_id]; });
             isNextEnabled = oneDetectionChecked && allStopsChecked;
         } else {
-            var itemsToCheck = phaseItems;
-            if (currentPhase === 3 || currentPhase === 5) {
-                var linkedPhase = currentPhase === 3 ? 2 : 4;
-                var problemItemIds = [];
-                for (var key in userSelections) {
-                    if (userSelections.hasOwnProperty(key)) {
-                        var selection = userSelections[key];
-                        if (parseInt(key.split('_')[0]) === linkedPhase && selection.value === '問題あり') {
-                            problemItemIds.push(key);
-                        }
-                    }
-                }
-                itemsToCheck = phaseItems.filter(function(item) { return problemItemIds.indexOf(item.linked_item_id) !== -1; });
-            }
             isNextEnabled = itemsToCheck.length > 0 ? itemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
         }
         $('#next-btn').prop('disabled', !isNextEnabled);
@@ -228,11 +217,16 @@
         if (printAlreadyEnabled) {
             $('#print-btn').prop('disabled', false);
         } else {
-            var phase3Items = checklistData.filter(function(item) { return parseInt(item.phase) === 3; });
-            var allPhase3Answered = phase3Items.every(function(item) { return userSelections[item.item_id]; });
-            if (currentPhase === 3 && allPhase3Answered) {
-                $('#print-btn').prop('disabled', false);
-                sessionStorage.setItem(printEnabledKey, 'true');
+            if (currentPhase === 3) {
+                var phase3ItemsToCheck = itemsToCheck; // In phase 3, itemsToCheck is already filtered.
+                var allPhase3Answered = phase3ItemsToCheck.length > 0 ? phase3ItemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
+                if (allPhase3Answered) {
+                    $('#print-btn').prop('disabled', false);
+                    sessionStorage.setItem(printEnabledKey, 'true');
+                }
+                 else {
+                    $('#print-btn').prop('disabled', true);
+                }
             } else {
                 $('#print-btn').prop('disabled', true);
             }
@@ -247,7 +241,6 @@
             sessionStorage.setItem(selectionKey, JSON.stringify(userSelections));
             updateNavigation();
         });
-
         $('#next-btn').click(function() {
             var totalPhases = Math.max.apply(Math, checklistData.map(function(item) { return parseInt(item.phase); }));
             if (currentPhase < totalPhases) {
@@ -256,7 +249,6 @@
                 renderPhase(currentPhase);
             }
         });
-
         $('#prev-btn').click(function() {
             if (currentPhase > 1) {
                 currentPhase--;
@@ -264,19 +256,54 @@
                 renderPhase(currentPhase);
             }
         });
-
         $('#exit-btn').click(function() {
             if (confirm('メインメニューに戻りますか？\n(入力内容は保存されます)')) {
                 $('#checklist-app-container').addClass('d-none');
                 $('#menu-container').removeClass('d-none');
-                // Reset checklist state
                 checklistData = [];
                 currentPhase = 1;
                 userSelections = {};
             }
         });
-
-        $('#print-btn').click(function() { /* ... Print Logic ... */ });
+        $('#print-btn').click(function() {
+            var checklistTitle = $('#checklist-title').text();
+            var reportHtml = '<h1>' + checklistTitle + ' - 実施報告書</h1>';
+            reportHtml += '<p><strong>実施日:</strong> ' + new Date().toLocaleDateString('ja-JP') + '</p><hr>';
+            var phases = [1, 2, 3, 4, 5, 6, 7];
+            phases.forEach(function(phaseNum) {
+                var phaseData = checklistData.filter(function(item){ return parseInt(item.phase) === phaseNum; });
+                if(phaseData.length > 0) {
+                    var phaseTitle = phaseData[0].phase_title;
+                    var sectionHtml = '';
+                    var hasContent = false;
+                    var grouped = phaseData.reduce(function(acc, item) {
+                        (acc[item.category] = acc[item.category] || []).push(item);
+                        return acc;
+                    }, {});
+                    for(var category in grouped) {
+                        var categoryContent = '';
+                        grouped[category].forEach(function(item){
+                            var selection = userSelections[item.item_id];
+                            if(selection){
+                                categoryContent += '<li>' + item.item + ': <strong>' + selection.value + '</strong></li>';
+                                hasContent = true;
+                            }
+                        });
+                        if(categoryContent) {
+                            sectionHtml += '<h4>' + category + '</h4><ul>' + categoryContent + '</ul>';
+                        }
+                    }
+                    if(hasContent) {
+                        reportHtml += '<h3>' + phaseTitle + '</h3>' + sectionHtml;
+                    }
+                }
+            });
+            var printableArea = $('#printable-area');
+            printableArea.html(reportHtml);
+            printableArea.removeClass('d-none');
+            window.print();
+            printableArea.addClass('d-none');
+        });
     }
 })();
     </script>

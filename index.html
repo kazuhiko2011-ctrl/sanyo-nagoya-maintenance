@@ -36,7 +36,7 @@
 
     function getQueryParam(param) {
         var href = window.location.href;
-        var name = param.replace(/[[\]]/g, '\\$&');
+        var name = param.replace(/[\\[\\]]/g, '\\$&');
         var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
         var results = regex.exec(href);
         if (!results) return null;
@@ -94,7 +94,7 @@
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
         fetch(fileName)
             .then(function(response) { 
-                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); }
+                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); } 
                 return response.text(); 
             })
             .then(function(csvText) {
@@ -185,7 +185,7 @@
             inputs += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
             for (var i = 0; i < options.length; i++) {
                 var isActive = savedValue === options[i];
-                inputs += '<label class="btn btn-outline-' + colors[i] + (isActive ? ' active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
+                inputs += '<label class="btn btn-' + colors[i] + (isActive ? ' active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
             }
             inputs += '</div>';
         }

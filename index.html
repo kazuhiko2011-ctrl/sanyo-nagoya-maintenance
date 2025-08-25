@@ -72,6 +72,7 @@
             { file: 'Paper_Bag_Filling_Machine_Checklist.csv', title: '紙袋充填機チェックリスト' },
             { file: 'Magnet_Pump_Checklist.csv', title: '「マグネットポンプ」異常対応チェックリスト' }
         ];
+
         var menuList = $('#menu-list');
         menuList.empty();
         checklistFiles.forEach(function(item) {
@@ -93,7 +94,7 @@
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
         fetch(fileName)
             .then(function(response) { 
-                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); } 
+                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); }
                 return response.text(); 
             })
             .then(function(csvText) {
@@ -227,7 +228,8 @@
         var printAlreadyEnabled = sessionStorage.getItem(printEnabledKey) === 'true';
         if (printAlreadyEnabled) {
             $('#print-btn').prop('disabled', false);
-        } else {
+        }
+        else {
             if (currentPhase === 3) {
                 var allPhase3Answered = itemsToCheck.length > 0 ? itemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
                 if (allPhase3Answered) {
@@ -245,10 +247,11 @@
 
     function attachGlobalEventListeners() {
         $('#checklist-container').on('change', 'input[type="radio"]', function() {
-            var key = this.name;
+            var key = this.name || $(this).data('item-key');
             var value = this.value;
             userSelections[key] = { value: value, id: key, phase: currentPhase };
             sessionStorage.setItem(selectionKey, JSON.stringify(userSelections));
+            // Explicitly manage active class for color persistence
             $('input[name="' + key + '"]').parent().removeClass('active');
             $(this).parent().addClass('active');
             updateNavigation();

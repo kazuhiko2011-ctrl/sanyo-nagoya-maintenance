@@ -4,17 +4,29 @@
 
 <!-- アクセス制限用スクリプト -->
 <script>
-  try {
-    const SECRET_KEY = "c-vs9c1JHcBhxUjeykMFKInY6ZNibykWONWkUs8ve5w";
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('key') !== SECRET_KEY) {
-      document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは直接表示できません。</p></div>';
-      throw new Error("Invalid access key.");
+  document.addEventListener('DOMContentLoaded', function() {
+    try {
+      const ALLOWED_REFERRER_DOMAIN = "5qr7i0oeqj7n.cybozu.com";
+      const referrer = document.referrer;
+
+      // リファラが存在し、ドメインが一致する場合のみアクセスを許可
+      if (referrer && new URL(referrer).hostname === ALLOWED_REFERRER_DOMAIN) {
+        // アクセス許可
+      } else {
+        // アクセス拒否
+        document.body.style.visibility = 'hidden'; // ちらつき防止
+        document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページはkintoneからのみアクセスできます。</p></div>';
+        document.body.style.visibility = 'visible';
+        throw new Error("Invalid referrer.");
+      }
+    } catch (e) {
+      // エラー発生時もアクセスを拒否
+      document.body.style.visibility = 'hidden';
+      document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページはkintoneからのみアクセスできます。</p></div>';
+      document.body.style.visibility = 'visible';
+      throw new Error("Access denied due to an error during referrer check.");
     }
-  } catch (e) {
-    // エラーが発生しても、以降のスクリプトが実行されないようにする
-    throw e;
-  }
+  });
 </script>
 <!-- /アクセス制限用スクリプト -->
 

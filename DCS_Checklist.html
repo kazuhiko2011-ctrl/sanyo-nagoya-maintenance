@@ -2,14 +2,33 @@
 <html lang="ja">
 <head>
 
-<!-- デバッグ用スクリプト -->
+<!-- アクセス制限用スクリプト -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    const referrer = document.referrer;
-    document.body.innerHTML = '<h1>デバッグ情報</h1><p>kintoneから送られてきたアクセス元情報 (Referrer) は以下の通りです。</p><hr><p style="font-weight: bold; color: red; font-size: 1.2em;">' + (referrer || '【情報なし】') + '</p><hr><p>この画面に表示された情報（特に赤文字の部分）を、担当者にお知らせください。</p>';
+    try {
+      // このキーとURLのキーが一致する場合のみ表示を許可
+      const SECRET_KEY = "93SYa4oyAeTbhKaC1Cj3hA";
+      const params = new URLSearchParams(window.location.search);
+
+      if (params.get('key') === SECRET_KEY) {
+        // キーが一致したので、アクセスを許可
+      } else {
+        // キーが不一致、または存在しないのでアクセスを拒否
+        document.body.style.visibility = 'hidden';
+        document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
+        document.body.style.visibility = 'visible';
+        throw new Error("Invalid or missing access key.");
+      }
+    } catch (e) {
+      // エラー発生時も念のため拒否
+      document.body.style.visibility = 'hidden';
+      document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは指定された場所からのみアクセスできます。</p></div>';
+      document.body.style.visibility = 'visible';
+      throw new Error("Access denied due to an error during key check.");
+    }
   });
 </script>
-<!-- /デバッグ用スクリプト -->
+<!-- /アクセス制限用スクリプト -->
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

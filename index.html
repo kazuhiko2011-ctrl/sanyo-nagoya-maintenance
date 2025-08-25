@@ -70,7 +70,6 @@
 
     // --- 6. メニュー機能 ---
     function initMenu() {
-        // このロジックは将来的に `glob` を使うことで、自動的にファイルを見つけるように拡張できる
         var checklistFiles = [
             { file: 'DCS_Checklist.csv', title: 'DCS異常対応チェックリスト' },
             { file: 'Canned_Pump_Checklist.csv', title: '「キャンドポンプ（業務用）」異常対応チェックリスト' },
@@ -102,8 +101,8 @@
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
 
         fetch(fileName)
-            .then(response => response.text())
-            .then(csvText => {
+            .then(function(response) { return response.text(); })
+            .then(function(csvText) {
                 Papa.parse(csvText, {
                     header: true,
                     skipEmptyLines: true,
@@ -120,16 +119,13 @@
 
     // --- 8. チェックリストの内部ロジック ---
     function initializeChecklist() {
-        currentPhase = 1; // Reset to phase 1
-        userSelections = {}; // Reset selections
+        currentPhase = 1;
+        userSelections = {};
         var storedSelections = sessionStorage.getItem(selectionKey);
         if (storedSelections) userSelections = JSON.parse(storedSelections);
         var storedPhase = sessionStorage.getItem(phaseKey);
         if (storedPhase) currentPhase = parseInt(storedPhase, 10);
-        
-        // Clear print enabled flag for new checklist
         sessionStorage.removeItem(printEnabledKey);
-
         renderPhase(currentPhase);
     }
 
@@ -273,10 +269,14 @@
             if (confirm('メインメニューに戻りますか？\n(入力内容は保存されます)')) {
                 $('#checklist-app-container').addClass('d-none');
                 $('#menu-container').removeClass('d-none');
+                // Reset checklist state
+                checklistData = [];
+                currentPhase = 1;
+                userSelections = {};
             }
         });
 
-        $('#print-btn').click(function() { /* ... Print logic ... */ });
+        $('#print-btn').click(function() { /* ... Print Logic ... */ });
     }
 })();
     </script>

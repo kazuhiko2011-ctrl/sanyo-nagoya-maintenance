@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+
+<!-- アクセス制限用スクリプト -->
+<script>
+  try {
+    const SECRET_KEY = "c-vs9c1JHcBhxUjeykMFKInY6ZNibykWONWkUs8ve5w";
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('key') !== SECRET_KEY) {
+      document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページは直接表示できません。</p></div>';
+      throw new Error("Invalid access key.");
+    }
+  } catch (e) {
+    // エラーが発生しても、以降のスクリプトが実行されないようにする
+    throw e;
+  }
+</script>
+<!-- /アクセス制限用スクリプト -->
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>チェックリストメニュー</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container mt-5 menu-container">
+        <h1 class="text-center mb-4">チェックリストメニュー</h1>
+        <div class="list-group">
+            <a href="Hugle_Pump_Checklist.html" class="list-group-item list-group-item-action">ヒューガルポンプ異常対応チェックリスト</a>
+            <a href="Gear_Pump_Checklist.html" class="list-group-item list-group-item-action">ギヤポンプ異常対応チェックリスト</a>
+            <a href="Canned_Pump_Checklist.html" class="list-group-item list-group-item-action">Canned Pump Checklist</a>
+            <a href="DCS_Checklist.html" class="list-group-item list-group-item-action">DCS Checklist</a>
+            <a href="Paper_Bag_Filling_Machine_Checklist.html" class="list-group-item list-group-item-action">Paper Bag Filling Machine Checklist</a>
+        </div>
+    </div>
+</body>
+</html>

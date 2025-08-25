@@ -93,7 +93,7 @@
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
         fetch(fileName)
             .then(function(response) { 
-                if (!response.ok) { throw new Error('Network response was not ok'); }
+                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); }
                 return response.text(); 
             })
             .then(function(csvText) {
@@ -101,6 +101,12 @@
                     header: true,
                     skipEmptyLines: true,
                     complete: function(results) {
+                        if (results.errors.length > 0) {
+                            console.error('CSV Parse Error:', results.errors);
+                            alert('CSVデータの解析に失敗しました。ファイルを確認してください。
+' + fileName);
+                            return;
+                        }
                         checklistData = results.data;
                         $('#checklist-title').text(title);
                         $('#menu-container').addClass('d-none');
@@ -111,7 +117,8 @@
             })
             .catch(function(error) {
                 console.error('Fetch Error:', error);
-                alert('チェックリストのデータ読み込みに失敗しました。ファイルパスを確認してください。\n' + fileName);
+                alert('チェックリストのデータ読み込みに失敗しました。ファイルパスや内容を確認してください。
+' + fileName);
             });
     }
 
@@ -122,7 +129,6 @@
         if (storedSelections) userSelections = JSON.parse(storedSelections);
         var storedPhase = sessionStorage.getItem(phaseKey);
         if (storedPhase) currentPhase = parseInt(storedPhase, 10);
-        sessionStorage.removeItem(printEnabledKey);
         renderPhase(currentPhase);
     }
 
@@ -180,7 +186,7 @@
             inputs += '<div class="btn-group btn-group-toggle" data-toggle="buttons">';
             for (var i = 0; i < options.length; i++) {
                 var isActive = savedValue === options[i];
-                inputs += '<label class="btn btn-outline-' + colors[i] + ' ' + (isActive ? 'active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
+                inputs += '<label class="btn btn-outline-' + colors[i] + (isActive ? ' active' : '') + '"><input type="radio" name="' + itemKey + '" value="' + options[i] + '" ' + (isActive ? 'checked' : '') + '> ' + options[i] + '</label>';
             }
             inputs += '</div>';
         }
@@ -225,8 +231,7 @@
             $('#print-btn').prop('disabled', false);
         } else {
             if (currentPhase === 3) {
-                var phase3ItemsToCheck = itemsToCheck;
-                var allPhase3Answered = phase3ItemsToCheck.length > 0 ? phase3ItemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
+                var allPhase3Answered = itemsToCheck.length > 0 ? itemsToCheck.every(function(item) { return userSelections[item.item_id]; }) : true;
                 if (allPhase3Answered) {
                     $('#print-btn').prop('disabled', false);
                     sessionStorage.setItem(printEnabledKey, 'true');
@@ -241,13 +246,29 @@
     }
 
     function attachGlobalEventListeners() {
-        $('#checklist-container').on('change', 'input', function() {
-            var key = this.name || $(this).data('item-key');
-            var value = $(this).is(':checkbox') ? (this.checked ? 'checked' : 'unchecked') : this.value;
+        $('#checklist-container').on('change', 'input[type="radio"]', function() {
+            var key = this.name;
+            var value = this.value;
             userSelections[key] = { value: value, id: key, phase: currentPhase };
+            sessionStorage.setItem(selectionKey, JSON.stringify(userSelections));
+            // Explicitly manage active class for color persistence
+            $('input[name="' + key + '"]').parent().removeClass('active');
+            $(this).parent().addClass('active');
+            updateNavigation();
+        });
+
+        $('#checklist-container').on('change', 'input[type="checkbox"]', function() {
+            var key = $(this).data('item-key');
+            var value = this.checked ? 'checked' : 'unchecked';
+             if (this.checked) {
+                userSelections[key] = { value: value, id: key, phase: currentPhase };
+            } else {
+                delete userSelections[key];
+            }
             sessionStorage.setItem(selectionKey, JSON.stringify(userSelections));
             updateNavigation();
         });
+
         $('#next-btn').click(function() {
             var totalPhases = Math.max.apply(Math, checklistData.map(function(item) { return parseInt(item.phase); }));
             if (currentPhase < totalPhases) {
@@ -256,6 +277,7 @@
                 renderPhase(currentPhase);
             }
         });
+
         $('#prev-btn').click(function() {
             if (currentPhase > 1) {
                 currentPhase--;
@@ -263,6 +285,7 @@
                 renderPhase(currentPhase);
             }
         });
+
         $('#exit-btn').click(function() {
             if (confirm('メインメニューに戻りますか？\n(入力内容は保存されます)')) {
                 $('#checklist-app-container').addClass('d-none');
@@ -272,6 +295,7 @@
                 userSelections = {};
             }
         });
+
         $('#print-btn').click(function() {
             var checklistTitle = $('#checklist-title').text();
             var reportHtml = '<h1>' + checklistTitle + ' - 実施報告書</h1>';

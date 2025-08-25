@@ -94,7 +94,7 @@
         printEnabledKey = 'printEnabled_' + currentChecklistFile;
         fetch(fileName)
             .then(function(response) { 
-                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); }
+                if (!response.ok) { throw new Error('Network response was not ok for ' + fileName); } 
                 return response.text(); 
             })
             .then(function(csvText) {
@@ -248,10 +248,9 @@
     function attachGlobalEventListeners() {
         $('#checklist-container').on('change', 'input[type="radio"]', function() {
             var key = this.name || $(this).data('item-key');
-            var value = this.value;
+            var value = $(this).is(':checkbox') ? (this.checked ? 'checked' : 'unchecked') : this.value;
             userSelections[key] = { value: value, id: key, phase: currentPhase };
             sessionStorage.setItem(selectionKey, JSON.stringify(userSelections));
-            // Explicitly manage active class for color persistence
             $('input[name="' + key + '"]').parent().removeClass('active');
             $(this).parent().addClass('active');
             updateNavigation();

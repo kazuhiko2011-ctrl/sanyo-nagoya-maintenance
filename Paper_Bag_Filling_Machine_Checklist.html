@@ -2,33 +2,14 @@
 <html lang="ja">
 <head>
 
-<!-- アクセス制限用スクリプト -->
+<!-- デバッグ用スクリプト -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    try {
-      const ALLOWED_REFERRER_DOMAIN = "5qr7i0oeqj7n.cybozu.com";
-      const referrer = document.referrer;
-
-      // リファラが存在し、ドメインが一致する場合のみアクセスを許可
-      if (referrer && new URL(referrer).hostname === ALLOWED_REFERRER_DOMAIN) {
-        // アクセス許可
-      } else {
-        // アクセス拒否
-        document.body.style.visibility = 'hidden'; // ちらつき防止
-        document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページはkintoneからのみアクセスできます。</p></div>';
-        document.body.style.visibility = 'visible';
-        throw new Error("Invalid referrer.");
-      }
-    } catch (e) {
-      // エラー発生時もアクセスを拒否
-      document.body.style.visibility = 'hidden';
-      document.body.innerHTML = '<div style="text-align: center; padding-top: 50px; font-family: sans-serif;"><h1>アクセス権がありません</h1><p>このページはkintoneからのみアクセスできます。</p></div>';
-      document.body.style.visibility = 'visible';
-      throw new Error("Access denied due to an error during referrer check.");
-    }
+    const referrer = document.referrer;
+    document.body.innerHTML = '<h1>デバッグ情報</h1><p>kintoneから送られてきたアクセス元情報 (Referrer) は以下の通りです。</p><hr><p style="font-weight: bold; color: red; font-size: 1.2em;">' + (referrer || '【情報なし】') + '</p><hr><p>この画面に表示された情報（特に赤文字の部分）を、担当者にお知らせください。</p>';
   });
 </script>
-<!-- /アクセス制限用スクリプト -->
+<!-- /デバッグ用スクリプト -->
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
